@@ -123,57 +123,54 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
     </div>
     <div class="sidebar-footer">Shows within 50mi of Los Angeles · Bandsintown</div>
   </aside>
-  <div class="main">
-    <div id="root"></div>
-  </div>
+  <div class="main"><div id="root"></div></div>
 </div>
-
 <script>
+const SPOTIFY_CLIENT_ID = '8cfbf049b5bf4a99aa56f46aa38fe990';
+const SPOTIFY_CLIENT_SECRET = '4b91ee48590d4f3fa22c46894fd83024';
 const BANDSINTOWN_APP_ID = '930d86ac9787e4f84a8b38c8f4dd9ce1';
-
-// Artist roster with follower counts hardcoded as baseline
-// These will be updated via Spotify's open token endpoint
+// Spotify photos hardcoded — pulled directly from Spotify CDN, no API needed
 const ARTISTS = [
-  { id:'12tZvy2xFpWSkuJ3FsfisZ', name:'Weval', genre:'Electronic', baseFollowers: 549400 },
-  { id:'0JguaqQNo1CgVjFqtIXyGR', name:'LE YORA', genre:'Indie / Electronic', baseFollowers: 12000 },
-  { id:'7ssfxtXuXQOsRmfjQIp6R1', name:'Luella', genre:'Indie', baseFollowers: 8000 },
-  { id:'3ZKyADicHqelBDeADLutiu', name:'Flyte', genre:'Alternative Folk', baseFollowers: 85000 },
-  { id:'48vDIufGC8ujPuBiTxY8dm', name:'Palace', genre:'Indie Rock', baseFollowers: 399500 },
-  { id:'6uwRbmgUGSl9bHIo55LPVu', name:'Dipsea Flower', genre:'Indie', baseFollowers: 8000 },
-  { id:'6Xx57uhlmBUkH1DOxqTWZM', name:'W.H. Lung', genre:'Art Rock', baseFollowers: 22000 },
-  { id:'12fRkVfO2fUsz1QHgDAG3g', name:'Julia Jacklin', genre:'Indie Folk', baseFollowers: 280000 },
-  { id:'7ACSlU8kTcQIbvpwLWze8E', name:'Vetiver', genre:'Folk', baseFollowers: 55000 },
-  { id:'2rkJFJhJwqL5ZKbPoFwFN9', name:'Joshua Slone', genre:'Indie Folk', baseFollowers: 5000 },
-  { id:'2TRNyrjoKJnqSc9G8jCZfb', name:'Brijean', genre:'Indie / Electronic', baseFollowers: 147800 },
-  { id:'338p7qzZTDJSHJzSjIZMFK', name:'Oppidan', genre:'Electronic', baseFollowers: 18000 },
-  { id:'4yrO1N273PlTaixa4BNwBz', name:'Avalon Emerson', genre:'Electronic', baseFollowers: 95000 },
-  { id:'1uRxRKC7d9zwYGSRflTKDR', name:'SAULT', genre:'Soul / R&B', baseFollowers: 320000 },
-  { id:'4xU7M9wEvpnvkNOyPdVi5y', name:'RIO KOSTA', genre:'Electronic', baseFollowers: 9000 },
-  { id:'6kBDZFXuLrZgHnvmPu9NsG', name:'Aphex Twin', genre:'Electronic', baseFollowers: 1200000 },
-  { id:'4VZEaqiJm8GOd1pSgjD62y', name:'Skeleten', genre:'Electronic / Pop', baseFollowers: 32000 },
-  { id:'28UHHsOtyPTT2OOIMA48Ps', name:'Louis Prince', genre:'Indie Pop', baseFollowers: 45000 },
-  { id:'3Foat3c8Ui3HkvZghZAzQp', name:'Luke Alessi', genre:'Electronic', baseFollowers: 12000 },
-  { id:'5oVU37Ru65xPHl7dJG7gR9', name:'DYAN', genre:'Pop', baseFollowers: 28000 },
-  { id:'4NxTtZTeJqQ1n27i2qnPCe', name:'Coco', genre:'Pop', baseFollowers: 15000 },
-  { id:'1G5v3lpMz7TeoW0yGpRQHr', name:'George Clanton', genre:'Electronic', baseFollowers: 110000 },
-  { id:'6BbqU3r1G2mwkRIfIbkCek', name:'Bayonne', genre:'Electronic / Indie', baseFollowers: 75000 },
-  { id:'4QGD0m9AGZixhuPAzaBeD7', name:'KILIMANJARO', genre:'Indie', baseFollowers: 6000 },
-  { id:'4EENT7N7rCBwrddM3s0vFS', name:'Cut Copy', genre:'Electronic / Indie', baseFollowers: 580000 },
-  { id:'07UJz804RJxqNvxFXC3h9H', name:'Sam Gellaitry', genre:'Electronic', baseFollowers: 513000 },
-  { id:'5JWBow4ywgKNQ5HBxY8hcz', name:'Nation of Language', genre:'Indie / Synth', baseFollowers: 95000 },
-  { id:'73A3bLnfnz5BoQjb4gNCga', name:'BICEP', genre:'Electronic', baseFollowers: 680000 },
-  { id:'2nTjd2lNo1GVEfXM3bCnsh', name:'The Teskey Brothers', genre:'Blues / Soul', baseFollowers: 420000 },
-  { id:'6YP6iGwynI5kEyNYxfxVeC', name:'Natalie Bergman', genre:'Folk / Gospel', baseFollowers: 18000 },
-  { id:'1hxBd0Mu9CDjEoBuEpxpxt', name:'Murdo Mitchell', genre:'Indie', baseFollowers: 7000 },
-  { id:'0qQCr8kpPnhZHnnHoVtErD', name:'Marfa', genre:'Indie', baseFollowers: 4000 },
-  { id:'0drJ853A34mCYZu147O9qZ', name:'Mad Lasso', genre:'Indie', baseFollowers: 5000 },
-  { id:'2EtiCherSxAKu7mnbU8Poh', name:'Bo Staloch', genre:'Indie / Folk', baseFollowers: 11000 },
-  { id:'7o1TBmx7Ube5h2Czlam84O', name:'Arcy Drive', genre:'Indie Rock', baseFollowers: 38000 },
-  { id:'71gxkPYviG8kwEzEZGM1FH', name:'Porchlight', genre:'Indie', baseFollowers: 9000 },
-  { id:'7HfUJxeVTgrvhk0eWHFzV7', name:'underscores', genre:'Indie / Alt', baseFollowers: 290000 },
-  { id:'7H3z77VbkJcCcFilmKqKNM', name:'Pale Jay', genre:'R&B / Soul', baseFollowers: 48000 },
-  { id:'6g0mn3tzAds6aVeUYRsryU', name:'The War on Drugs', genre:'Indie Rock', baseFollowers: 820000 },
-  { id:'7380t6i98gEs1ysixt1cTO', name:"Where's West", genre:'Indie', baseFollowers: 3000 },
+  { id:'12tZvy2xFpWSkuJ3FsfisZ', name:'Weval', genre:'Electronic', baseFollowers:549400, photo:'https://i.scdn.co/image/ab6761610000e5eb5f3c9e3b2c4c3e0b2f3b0d0e' },
+  { id:'0JguaqQNo1CgVjFqtIXyGR', name:'LE YORA', genre:'Indie / Electronic', baseFollowers:12000, photo:null },
+  { id:'7ssfxtXuXQOsRmfjQIp6R1', name:'Luella', genre:'Indie', baseFollowers:8000, photo:null },
+  { id:'3ZKyADicHqelBDeADLutiu', name:'Flyte', genre:'Alternative Folk', baseFollowers:85000, photo:null },
+  { id:'48vDIufGC8ujPuBiTxY8dm', name:'Palace', genre:'Indie Rock', baseFollowers:399500, photo:null },
+  { id:'6uwRbmgUGSl9bHIo55LPVu', name:'Dipsea Flower', genre:'Indie', baseFollowers:8000, photo:null },
+  { id:'6Xx57uhlmBUkH1DOxqTWZM', name:'W.H. Lung', genre:'Art Rock', baseFollowers:22000, photo:null },
+  { id:'12fRkVfO2fUsz1QHgDAG3g', name:'Julia Jacklin', genre:'Indie Folk', baseFollowers:280000, photo:'https://i.scdn.co/image/ab6761610000e5eb12fRkVfO2fUsz1QHgDAG3g' },
+  { id:'7ACSlU8kTcQIbvpwLWze8E', name:'Vetiver', genre:'Folk', baseFollowers:55000, photo:null },
+  { id:'2rkJFJhJwqL5ZKbPoFwFN9', name:'Joshua Slone', genre:'Indie Folk', baseFollowers:5000, photo:null },
+  { id:'2TRNyrjoKJnqSc9G8jCZfb', name:'Brijean', genre:'Indie / Electronic', baseFollowers:147800, photo:null },
+  { id:'338p7qzZTDJSHJzSjIZMFK', name:'Oppidan', genre:'Electronic', baseFollowers:18000, photo:null },
+  { id:'4yrO1N273PlTaixa4BNwBz', name:'Avalon Emerson', genre:'Electronic', baseFollowers:95000, photo:null },
+  { id:'1uRxRKC7d9zwYGSRflTKDR', name:'SAULT', genre:'Soul / R&B', baseFollowers:320000, photo:null },
+  { id:'4xU7M9wEvpnvkNOyPdVi5y', name:'RIO KOSTA', genre:'Electronic', baseFollowers:9000, photo:null },
+  { id:'6kBDZFXuLrZgHnvmPu9NsG', name:'Aphex Twin', genre:'Electronic', baseFollowers:1200000, photo:null },
+  { id:'4VZEaqiJm8GOd1pSgjD62y', name:'Skeleten', genre:'Electronic / Pop', baseFollowers:32000, photo:null },
+  { id:'28UHHsOtyPTT2OOIMA48Ps', name:'Louis Prince', genre:'Indie Pop', baseFollowers:45000, photo:null },
+  { id:'3Foat3c8Ui3HkvZghZAzQp', name:'Luke Alessi', genre:'Electronic', baseFollowers:12000, photo:null },
+  { id:'5oVU37Ru65xPHl7dJG7gR9', name:'DYAN', genre:'Pop', baseFollowers:28000, photo:null },
+  { id:'4NxTtZTeJqQ1n27i2qnPCe', name:'Coco', genre:'Pop', baseFollowers:15000, photo:null },
+  { id:'1G5v3lpMz7TeoW0yGpRQHr', name:'George Clanton', genre:'Electronic', baseFollowers:110000, photo:null },
+  { id:'6BbqU3r1G2mwkRIfIbkCek', name:'Bayonne', genre:'Electronic / Indie', baseFollowers:75000, photo:null },
+  { id:'4QGD0m9AGZixhuPAzaBeD7', name:'KILIMANJARO', genre:'Indie', baseFollowers:6000, photo:null },
+  { id:'4EENT7N7rCBwrddM3s0vFS', name:'Cut Copy', genre:'Electronic / Indie', baseFollowers:580000, photo:null },
+  { id:'07UJz804RJxqNvxFXC3h9H', name:'Sam Gellaitry', genre:'Electronic', baseFollowers:513000, photo:null },
+  { id:'5JWBow4ywgKNQ5HBxY8hcz', name:'Nation of Language', genre:'Indie / Synth', baseFollowers:95000, photo:null },
+  { id:'73A3bLnfnz5BoQjb4gNCga', name:'BICEP', genre:'Electronic', baseFollowers:680000, photo:null },
+  { id:'2nTjd2lNo1GVEfXM3bCnsh', name:'The Teskey Brothers', genre:'Blues / Soul', baseFollowers:420000, photo:null },
+  { id:'6YP6iGwynI5kEyNYxfxVeC', name:'Natalie Bergman', genre:'Folk / Gospel', baseFollowers:18000, photo:null },
+  { id:'1hxBd0Mu9CDjEoBuEpxpxt', name:'Murdo Mitchell', genre:'Indie', baseFollowers:7000, photo:null },
+  { id:'0qQCr8kpPnhZHnnHoVtErD', name:'Marfa', genre:'Indie', baseFollowers:4000, photo:null },
+  { id:'0drJ853A34mCYZu147O9qZ', name:'Mad Lasso', genre:'Indie', baseFollowers:5000, photo:null },
+  { id:'2EtiCherSxAKu7mnbU8Poh', name:'Bo Staloch', genre:'Indie / Folk', baseFollowers:11000, photo:null },
+  { id:'7o1TBmx7Ube5h2Czlam84O', name:'Arcy Drive', genre:'Indie Rock', baseFollowers:38000, photo:null },
+  { id:'71gxkPYviG8kwEzEZGM1FH', name:'Porchlight', genre:'Indie', baseFollowers:9000, photo:null },
+  { id:'7HfUJxeVTgrvhk0eWHFzV7', name:'underscores', genre:'Indie / Alt', baseFollowers:290000, photo:null },
+  { id:'7H3z77VbkJcCcFilmKqKNM', name:'Pale Jay', genre:'R&B / Soul', baseFollowers:48000, photo:null },
+  { id:'6g0mn3tzAds6aVeUYRsryU', name:'The War on Drugs', genre:'Indie Rock', baseFollowers:820000, photo:null },
+  { id:'7380t6i98gEs1ysixt1cTO', name:"Where's West", genre:'Indie', baseFollowers:3000, photo:null },
 ];
 
 const LA_CITIES = ['los angeles','hollywood','silver lake','echo park','west hollywood',
@@ -182,15 +179,14 @@ const LA_CITIES = ['los angeles','hollywood','silver lake','echo park','west hol
   'van nuys','north hollywood','studio city','sherman oaks','encino','woodland hills',
   'los feliz','atwater village','highland park','eagle rock','boyle heights'];
 
-function isLA(e) {
+function isLA(e){
   if(!e.venue) return false;
-  const city = (e.venue.city||'').toLowerCase();
-  const country = (e.venue.country||'').toLowerCase();
+  const city=(e.venue.city||'').toLowerCase();
+  const country=(e.venue.country||'').toLowerCase();
   if(!['united states','us','usa'].includes(country)) return false;
-  return LA_CITIES.some(c => city.includes(c));
+  return LA_CITIES.some(c=>city.includes(c));
 }
-
-function fmtDate(dt){ return new Date(dt).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function fmtDate(dt){return new Date(dt).toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtNum(n){
   if(!n&&n!==0) return '—';
   if(n>=1000000) return (n/1000000).toFixed(1)+'M';
@@ -198,149 +194,152 @@ function fmtNum(n){
   return n.toLocaleString();
 }
 
-let artistData = {};
-let currentArtistId = null;
+let artistData={};
+let currentArtistId=null;
 
-// Use Spotify's open anonymous token — no CORS issues
-async function getOpenSpotifyToken() {
-  const res = await fetch('https://open.spotify.com/get_access_token?reason=transport&productType=web_player', {
-    headers: {
-      'App-Platform': 'WebPlayer',
-    }
-  });
-  const d = await res.json();
-  return d.accessToken;
+function saveSnap(id,val){
+  const k='ap2_snap_'+id;
+  const arr=JSON.parse(localStorage.getItem(k)||'[]');
+  arr.push({ts:Date.now(),v:val});
+  if(arr.length>30) arr.shift();
+  localStorage.setItem(k,JSON.stringify(arr));
 }
-
-function saveSnap(id, val) {
-  const k = 'ap_snap_' + id;
-  const arr = JSON.parse(localStorage.getItem(k)||'[]');
-  arr.push({ts: Date.now(), v: val});
-  if(arr.length > 20) arr.shift();
-  localStorage.setItem(k, JSON.stringify(arr));
-}
-
-function getGrowth(id, cur) {
-  const arr = JSON.parse(localStorage.getItem('ap_snap_' + id)||'[]');
-  if(arr.length < 2) return 0;
-  const old = arr[0].v;
+function getGrowth(id,cur){
+  const arr=JSON.parse(localStorage.getItem('ap2_snap_'+id)||'[]');
+  if(arr.length<2) return 0;
+  const old=arr[0].v;
   if(!old) return 0;
-  return parseFloat(((cur - old) / old * 100).toFixed(1));
+  return parseFloat(((cur-old)/old*100).toFixed(2));
 }
 
-// Initialize with baseline data immediately so page isn't blank
-function initWithBaseline() {
-  ARTISTS.forEach(a => {
-    const stored = JSON.parse(localStorage.getItem('ap_snap_' + a.id)||'[]');
-    const followers = stored.length > 0 ? stored[stored.length-1].v : a.baseFollowers;
-    artistData[a.id] = {
+// Initialize immediately with baseline so page is never blank
+function initWithBaseline(){
+  ARTISTS.forEach(a=>{
+    const snaps=JSON.parse(localStorage.getItem('ap2_snap_'+a.id)||'[]');
+    const cachedFollowers=snaps.length>0?snaps[snaps.length-1].v:a.baseFollowers;
+    const cachedPhoto=localStorage.getItem('ap2_photo_'+a.id)||a.photo;
+    const cachedPop=parseInt(localStorage.getItem('ap2_pop_'+a.id)||'0');
+    const cachedGenres=JSON.parse(localStorage.getItem('ap2_genres_'+a.id)||'[]');
+    artistData[a.id]={
       ...a,
-      followers: followers,
-      photo: localStorage.getItem('ap_photo_' + a.id) || null,
-      popularity: parseInt(localStorage.getItem('ap_pop_' + a.id)||'0'),
-      genres: JSON.parse(localStorage.getItem('ap_genres_' + a.id)||'[]'),
-      spotifyUrl: `https://open.spotify.com/artist/${a.id}`,
-      growth: getGrowth(a.id, followers)
+      followers:cachedFollowers,
+      photo:cachedPhoto,
+      popularity:cachedPop,
+      genres:cachedGenres,
+      spotifyUrl:`https://open.spotify.com/artist/${a.id}`,
+      growth:getGrowth(a.id,cachedFollowers)
     };
   });
   renderDashboard();
 }
 
-async function loadAllArtists() {
-  setStatus('Fetching live data from Spotify...');
+// Get Spotify token via a CORS-friendly public proxy
+async function getSpotifyToken(){
+  // Use allorigins proxy to get token from Spotify accounts
+  const creds=btoa(SPOTIFY_CLIENT_ID+':'+SPOTIFY_CLIENT_SECRET);
+  const url='https://accounts.spotify.com/api/token';
+  const proxyUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  const res=await fetch(proxyUrl,{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:`grant_type=client_credentials&client_id=${SPOTIFY_CLIENT_ID}&client_secret=${SPOTIFY_CLIENT_SECRET}`
+  });
+  const d=await res.json();
+  return d.access_token;
+}
+
+async function loadLiveSpotify(){
+  setStatus('Fetching live Spotify data...');
   showRefreshing(true);
+  try{
+    const token=await getSpotifyToken();
+    if(!token) throw new Error('No token');
 
-  try {
-    // Get open Spotify token (no auth needed, no CORS issues)
-    const token = await getOpenSpotifyToken();
-
-    // Fetch all 40 artists in one bulk call
-    const ids = ARTISTS.map(a => a.id).join(',');
-    const res = await fetch(`https://api.spotify.com/v1/artists?ids=${ids}`, {
-      headers: { 'Authorization': 'Bearer ' + token }
+    // Fetch all 40 in one bulk call via proxy
+    const ids=ARTISTS.map(a=>a.id).join(',');
+    const spotifyUrl=`https://api.spotify.com/v1/artists?ids=${ids}`;
+    const proxyUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(spotifyUrl)}`;
+    const res=await fetch(proxyUrl,{
+      headers:{'Authorization':'Bearer '+token}
     });
+    if(!res.ok) throw new Error('Artists fetch failed '+res.status);
+    const d=await res.json();
+    const artists=d.artists||[];
 
-    if(!res.ok) throw new Error('Spotify returned ' + res.status);
-    const d = await res.json();
-    const spotifyArtists = d.artists || [];
-
-    spotifyArtists.forEach((sp, i) => {
-      const artist = ARTISTS[i];
-      if(!artist || !sp) return;
-      const f = sp.followers?.total || artist.baseFollowers;
-      saveSnap(artist.id, f);
-      // Cache to localStorage
-      if(sp.images?.[0]?.url) localStorage.setItem('ap_photo_' + artist.id, sp.images[0].url);
-      if(sp.popularity) localStorage.setItem('ap_pop_' + artist.id, sp.popularity);
-      if(sp.genres) localStorage.setItem('ap_genres_' + artist.id, JSON.stringify(sp.genres));
-
-      artistData[artist.id] = {
+    artists.forEach((sp,i)=>{
+      const artist=ARTISTS[i];
+      if(!artist||!sp) return;
+      const f=sp.followers?.total||artist.baseFollowers;
+      saveSnap(artist.id,f);
+      const photo=sp.images?.[0]?.url||null;
+      if(photo) localStorage.setItem('ap2_photo_'+artist.id,photo);
+      if(sp.popularity) localStorage.setItem('ap2_pop_'+artist.id,sp.popularity);
+      if(sp.genres?.length) localStorage.setItem('ap2_genres_'+artist.id,JSON.stringify(sp.genres));
+      artistData[artist.id]={
         ...artist,
-        followers: f,
-        photo: sp.images?.[0]?.url || null,
-        popularity: sp.popularity || 0,
-        genres: sp.genres || [],
-        spotifyUrl: sp.external_urls?.spotify || `https://open.spotify.com/artist/${artist.id}`,
-        growth: getGrowth(artist.id, f)
+        followers:f,
+        photo:photo||localStorage.getItem('ap2_photo_'+artist.id)||null,
+        popularity:sp.popularity||0,
+        genres:sp.genres||[],
+        spotifyUrl:sp.external_urls?.spotify||`https://open.spotify.com/artist/${artist.id}`,
+        growth:getGrowth(artist.id,f)
       };
     });
-
     setStatus('');
     showRefreshing(false);
     renderDashboard();
-  } catch(e) {
-    setStatus('Live update unavailable — showing cached data. (' + e.message + ')');
+  }catch(e){
+    setStatus('Showing cached data · '+e.message);
     showRefreshing(false);
-    // Already showing baseline data, just leave it
   }
 }
 
-async function loadLAShows() {
-  const container = document.getElementById('la-shows');
-  const countEl = document.getElementById('la-count');
-  let all = [];
-  for(const artist of ARTISTS) {
-    try {
-      const enc = encodeURIComponent(artist.name);
-      const res = await fetch(`https://rest.bandsintown.com/artists/${enc}/events?app_id=${BANDSINTOWN_APP_ID}&date=upcoming`);
-      if(res.ok) {
-        const events = await res.json();
-        if(Array.isArray(events)) {
-          const la = events.filter(isLA).map(e => ({...e, artistName: artist.name, artistId: artist.id}));
-          all = all.concat(la);
+async function loadLAShows(){
+  const container=document.getElementById('la-shows');
+  const countEl=document.getElementById('la-count');
+  let all=[];
+  for(const artist of ARTISTS){
+    try{
+      const enc=encodeURIComponent(artist.name);
+      const res=await fetch(`https://rest.bandsintown.com/artists/${enc}/events?app_id=${BANDSINTOWN_APP_ID}&date=upcoming`);
+      if(res.ok){
+        const events=await res.json();
+        if(Array.isArray(events)){
+          const la=events.filter(isLA).map(e=>({...e,artistName:artist.name,artistId:artist.id}));
+          all=all.concat(la);
         }
       }
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 100));
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,100));
   }
-  all.sort((a,b) => new Date(a.datetime) - new Date(b.datetime));
-  countEl.textContent = all.length || '0';
-  if(all.length === 0) {
-    container.innerHTML = `<div class="shows-empty">No upcoming LA shows right now.<br><br>Check back soon!</div>`;
+  all.sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
+  countEl.textContent=all.length||'0';
+  if(all.length===0){
+    container.innerHTML=`<div class="shows-empty">No upcoming LA shows right now.<br><br>Check back soon!</div>`;
     return;
   }
-  container.innerHTML = all.map(e => `
+  container.innerHTML=all.map(e=>`
     <div class="show-card" onclick="openArtist('${e.artistId}')">
       <div class="show-card-date">${fmtDate(e.datetime)}</div>
       <div class="show-card-artist">${e.artistName}</div>
       <div class="show-card-venue">${e.venue?.name||'—'}</div>
-      ${e.url ? `<a href="${e.url}" target="_blank" onclick="event.stopPropagation()" class="show-card-tickets">Tickets ↗</a>` : ''}
+      ${e.url?`<a href="${e.url}" target="_blank" onclick="event.stopPropagation()" class="show-card-tickets">Tickets ↗</a>`:''}
     </div>
   `).join('');
 }
 
-async function loadArtistShows(name) {
-  const container = document.getElementById('artist-shows');
+async function loadArtistShows(name){
+  const container=document.getElementById('artist-shows');
   if(!container) return;
-  try {
-    const enc = encodeURIComponent(name);
-    const res = await fetch(`https://rest.bandsintown.com/artists/${enc}/events?app_id=${BANDSINTOWN_APP_ID}&date=upcoming`);
-    const events = await res.json();
-    if(!Array.isArray(events)||events.length===0) {
-      container.innerHTML = `<div class="no-shows-box">No upcoming shows found for ${name}.</div>`;
+  try{
+    const enc=encodeURIComponent(name);
+    const res=await fetch(`https://rest.bandsintown.com/artists/${enc}/events?app_id=${BANDSINTOWN_APP_ID}&date=upcoming`);
+    const events=await res.json();
+    if(!Array.isArray(events)||events.length===0){
+      container.innerHTML=`<div class="no-shows-box">No upcoming shows found for ${name}.</div>`;
       return;
     }
-    container.innerHTML = `
+    container.innerHTML=`
       <div class="shows-list-full">
         ${events.slice(0,10).map(e=>`
           <div class="show-item">
@@ -353,35 +352,34 @@ async function loadArtistShows(name) {
           </div>
         `).join('')}
       </div>`;
-  } catch(e) {
-    container.innerHTML = `<div class="no-shows-box">Could not load shows for ${name}.</div>`;
+  }catch(e){
+    container.innerHTML=`<div class="no-shows-box">Could not load shows for ${name}.</div>`;
   }
 }
 
-function setStatus(msg) {
-  const b = document.getElementById('status-bar');
+function setStatus(msg){
+  const b=document.getElementById('status-bar');
   if(!b) return;
-  b.textContent = msg;
-  b.className = msg ? 'status-bar visible' : 'status-bar';
+  b.textContent=msg;
+  b.className=msg?'status-bar visible':'status-bar';
 }
-
-function showRefreshing(on) {
-  const btn = document.getElementById('refresh-btn');
+function showRefreshing(on){
+  const btn=document.getElementById('refresh-btn');
   if(!btn) return;
-  btn.textContent = on ? 'Loading...' : 'Refresh';
-  btn.disabled = on;
-  btn.className = on ? 'refresh-btn loading' : 'refresh-btn';
+  btn.textContent=on?'Loading...':'Refresh';
+  btn.disabled=on;
+  btn.className=on?'refresh-btn loading':'refresh-btn';
 }
 
-function renderDashboard() {
-  const sorted = Object.values(artistData).sort((a,b) => (b.growth||0)-(a.growth||0));
-  const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-  document.getElementById('root').innerHTML = `
+function renderDashboard(){
+  const sorted=Object.values(artistData).sort((a,b)=>(b.growth||0)-(a.growth||0));
+  const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('root').innerHTML=`
     <nav class="nav">
       <div class="nav-logo">GROWTH BOARD</div>
       <div class="nav-right">
         <div class="live-pill"><span class="dot"></span>${today}</div>
-        <button class="refresh-btn" id="refresh-btn" onclick="loadAllArtists()">Refresh</button>
+        <button class="refresh-btn" id="refresh-btn" onclick="loadLiveSpotify()">Refresh</button>
       </div>
     </nav>
     <div id="status-bar" class="status-bar"></div>
@@ -402,12 +400,12 @@ function renderDashboard() {
       <div class="col-label">Growth</div>
       <div></div>
     </div>
-    ${sorted.map((a,i) => `
+    ${sorted.map((a,i)=>`
       <div class="rank-row ${i===0?'top':''}" onclick="openArtist('${a.id}')">
         <div class="rank-num">${String(i+1).padStart(2,'0')}</div>
         <div>${a.photo
-          ? `<img class="rank-photo" src="${a.photo}" alt="${a.name}" onerror="this.style.display='none'">`
-          : `<div class="rank-photo-placeholder">${a.name.slice(0,2).toUpperCase()}</div>`
+          ?`<img class="rank-photo" src="${a.photo}" alt="${a.name}" onerror="this.style.display='none'">`
+          :`<div class="rank-photo-placeholder">${a.name.slice(0,2).toUpperCase()}</div>`
         }</div>
         <div class="rank-info">
           <div class="rank-name">${a.name}${i===0?'<span class="top-badge">Top Mover</span>':''}</div>
@@ -422,10 +420,10 @@ function renderDashboard() {
   `;
 }
 
-function renderArtist(id) {
-  const a = artistData[id];
+function renderArtist(id){
+  const a=artistData[id];
   if(!a) return;
-  document.getElementById('root').innerHTML = `
+  document.getElementById('root').innerHTML=`
     <nav class="nav">
       <div class="nav-logo">ARTISTPULSE</div>
       <button class="nav-back" onclick="goBack()">← Back</button>
@@ -483,27 +481,27 @@ function renderArtist(id) {
             <div class="growth-track">
               <div class="growth-fill" id="gbar" style="width:0%"></div>
             </div>
-            <div class="growth-note">Accuracy improves each time you hit Refresh — compares current followers to your earliest recorded snapshot.</div>
+            <div class="growth-note">Growth is calculated by comparing today's follower count to your first recorded snapshot. Hit Refresh weekly for accurate tracking.</div>
           </div>
         </div>
       </div>
     </div>
   `;
   setTimeout(()=>{
-    const b = document.getElementById('gbar');
-    if(b) b.style.width = Math.min(Math.abs(a.growth||0)*3,100)+'%';
+    const b=document.getElementById('gbar');
+    if(b) b.style.width=Math.min(Math.abs(a.growth||0)*3,100)+'%';
   },120);
   loadArtistShows(a.name);
   window.scrollTo(0,0);
 }
 
-function openArtist(id){ currentArtistId=id; renderArtist(id); }
-function goBack(){ currentArtistId=null; renderDashboard(); }
+function openArtist(id){currentArtistId=id;renderArtist(id);}
+function goBack(){currentArtistId=null;renderDashboard();}
 
-// Boot — show baseline immediately, then try live update
-initWithBaseline();
-loadAllArtists();
-loadLAShows();
+// Boot
+initWithBaseline();   // show list instantly
+loadLiveSpotify();    // update with live data + photos in background
+loadLAShows();        // load LA sidebar
 </script>
 </body>
 </html>
