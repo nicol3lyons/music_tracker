@@ -509,11 +509,20 @@ function renderArtist(id) {
 function openArtist(id) { currentArtistId = id; renderArtist(id); }
 function goBack() { currentArtistId = null; renderDashboard(); }
 
-// Show all artists instantly from embedded baseline data
-initWithBaseline();
-// Load LA shows sidebar
+// Load all artists from embedded baseline data instantly
+ARTISTS.forEach(a => {
+  artistData[a.id] = {
+    ...a,
+    followers: a.baseFollowers || 0,
+    photo: a.photo || null,
+    popularity: 0,
+    genres: [],
+    spotifyUrl: 'https://open.spotify.com/artist/' + a.id,
+    growth: 0
+  };
+});
+renderDashboard();
 loadLAShows();
-// Note: Click "Refresh" to attempt live Spotify data update
 </script>
 </body>
 </html>
