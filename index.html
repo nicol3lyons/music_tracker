@@ -85,7 +85,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 .stat-card{background:var(--surface);padding:18px 20px}
 .stat-label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px}
 .stat-value{font-family:var(--display);font-size:34px;letter-spacing:0.02em;color:#fff;margin-bottom:4px;line-height:1}
-.stat-value.small{font-size:18px;margin-top:6px;font-family:var(--font);font-weight:600}
+.stat-value.small{font-size:16px;margin-top:8px;font-family:var(--font);font-weight:600;letter-spacing:0}
 .stat-change{font-family:var(--mono);font-size:10px;color:var(--text2)}
 .section{margin-bottom:2rem}
 .section-label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
@@ -109,7 +109,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 </head>
 <body>
 <div class="layout">
-
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-logo">ARTISTPULSE</div>
@@ -128,8 +127,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
   <div class="main">
     <div id="root"></div>
   </div>
-
 </div>
+
 <script>
 const SPOTIFY_CLIENT_ID = '8cfbf049b5bf4a99aa56f46aa38fe990';
 const SPOTIFY_CLIENT_SECRET = '4b91ee48590d4f3fa22c46894fd83024';
@@ -178,13 +177,11 @@ const ARTISTS = [
   { id:'7380t6i98gEs1ysixt1cTO', name:"Where's West", genre:'Indie' },
 ];
 
-const LA_CITIES = ['los angeles','hollywood','silver lake','echo park','koreatown',
-  'west hollywood','santa monica','culver city','long beach','anaheim','pasadena',
-  'burbank','glendale','pomona','inglewood','compton','torrance','hawthorne',
-  'el segundo','manhattan beach','hermosa beach','redondo beach','carson',
-  'van nuys','north hollywood','studio city','sherman oaks','encino',
-  'woodland hills','los feliz','atwater village','highland park','eagle rock',
-  'glassell park','mount washington','el sereno','boyle heights','east la'];
+const LA_CITIES = ['los angeles','hollywood','silver lake','echo park','west hollywood',
+  'santa monica','culver city','long beach','anaheim','pasadena','burbank','glendale',
+  'pomona','inglewood','torrance','manhattan beach','hermosa beach','redondo beach',
+  'van nuys','north hollywood','studio city','sherman oaks','encino','woodland hills',
+  'los feliz','atwater village','highland park','eagle rock','boyle heights'];
 
 function isLA(e) {
   if(!e.venue) return false;
@@ -194,12 +191,9 @@ function isLA(e) {
   return LA_CITIES.some(c => city.includes(c));
 }
 
-function fmtDate(dt) {
-  return new Date(dt).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-}
-
-function fmtNum(n) {
-  if(!n && n!==0) return '—';
+function fmtDate(dt){ return new Date(dt).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function fmtNum(n){
+  if(!n&&n!==0) return '—';
   if(n>=1000000) return (n/1000000).toFixed(1)+'M';
   if(n>=1000) return (n/1000).toFixed(1)+'K';
   return n.toLocaleString();
@@ -209,160 +203,185 @@ let spotifyToken = null;
 let artistData = {};
 let currentArtistId = null;
 
+// Get token
 async function getSpotifyToken() {
-  const res = await fetch('https://accounts.spotify.com/api/token',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/x-www-form-urlencoded',
-      'Authorization':'Basic '+btoa(SPOTIFY_CLIENT_ID+':'+SPOTIFY_CLIENT_SECRET)
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' + btoa(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET)
     },
-    body:'grant_type=client_credentials'
+    body: 'grant_type=client_credentials'
   });
+  if(!res.ok) throw new Error('Token request failed: ' + res.status);
   const d = await res.json();
+  if(!d.access_token) throw new Error('No token in response');
   spotifyToken = d.access_token;
+  return spotifyToken;
 }
 
-async function fetchSpotifyArtist(id) {
-  const res = await fetch(`https://api.spotify.com/v1/artists/${id}`,{
-    headers:{'Authorization':'Bearer '+spotifyToken}
+// Fetch up to 50 artists in ONE request using the bulk endpoint
+async function fetchArtistsBulk(ids) {
+  const res = await fetch(`https://api.spotify.com/v1/artists?ids=${ids.join(',')}`, {
+    headers: { 'Authorization': 'Bearer ' + spotifyToken }
   });
-  return res.json();
+  if(!res.ok) throw new Error('Artists fetch failed: ' + res.status);
+  const d = await res.json();
+  return d.artists || [];
 }
 
-function saveSnap(id,val) {
-  const k='ap_snap_'+id;
-  const arr=JSON.parse(localStorage.getItem(k)||'[]');
-  arr.push({ts:Date.now(),v:val});
-  if(arr.length>10) arr.shift();
-  localStorage.setItem(k,JSON.stringify(arr));
+function saveSnap(id, val) {
+  const k = 'ap_snap_' + id;
+  const arr = JSON.parse(localStorage.getItem(k)||'[]');
+  arr.push({ts: Date.now(), v: val});
+  if(arr.length > 20) arr.shift();
+  localStorage.setItem(k, JSON.stringify(arr));
 }
 
-function getGrowth(id,cur) {
-  const arr=JSON.parse(localStorage.getItem('ap_snap_'+id)||'[]');
-  if(arr.length<2) return 0;
-  const old=arr[0].v;
+function getGrowth(id, cur) {
+  const arr = JSON.parse(localStorage.getItem('ap_snap_' + id)||'[]');
+  if(arr.length < 2) return 0;
+  const old = arr[0].v;
   if(!old) return 0;
-  return parseFloat(((cur-old)/old*100).toFixed(1));
+  return parseFloat(((cur - old) / old * 100).toFixed(1));
 }
 
 async function loadAllArtists() {
   setStatus('Connecting to Spotify...');
   showRefreshing(true);
-  try { await getSpotifyToken(); } catch(e) {
-    setStatus('Could not connect to Spotify. Check credentials.');
+
+  try {
+    await getSpotifyToken();
+  } catch(e) {
+    setStatus('Spotify connection failed: ' + e.message);
     showRefreshing(false);
     return;
   }
-  for(let i=0;i<ARTISTS.length;i+=5){
-    const batch=ARTISTS.slice(i,i+5);
-    setStatus(`Loading artists ${i+1}–${Math.min(i+5,ARTISTS.length)} of ${ARTISTS.length}...`);
-    await Promise.all(batch.map(async a=>{
-      try{
-        const d=await fetchSpotifyArtist(a.id);
-        if(d&&d.followers){
-          const f=d.followers.total;
-          saveSnap(a.id,f);
-          artistData[a.id]={
-            ...a,
-            followers:f,
-            photo:d.images?.[0]?.url||null,
-            popularity:d.popularity||0,
-            genres:d.genres||[],
-            spotifyUrl:d.external_urls?.spotify,
-            growth:getGrowth(a.id,f)
-          };
-        }
-      }catch(e){
-        artistData[a.id]={...a,followers:0,growth:0,photo:null,popularity:0,genres:[]};
+
+  // Fetch ALL 40 artists in just 1 bulk API call (limit is 50)
+  setStatus('Fetching all 40 artists in one request...');
+  try {
+    const allIds = ARTISTS.map(a => a.id);
+    const spotifyArtists = await fetchArtistsBulk(allIds);
+
+    spotifyArtists.forEach((d, i) => {
+      const artist = ARTISTS[i];
+      if(!artist) return;
+      if(d && d.id) {
+        const f = d.followers?.total || 0;
+        saveSnap(d.id, f);
+        artistData[artist.id] = {
+          ...artist,
+          followers: f,
+          photo: d.images?.[0]?.url || null,
+          popularity: d.popularity || 0,
+          genres: d.genres || [],
+          spotifyUrl: d.external_urls?.spotify,
+          growth: getGrowth(artist.id, f)
+        };
+      } else {
+        // Artist not found, use placeholder
+        artistData[artist.id] = {...artist, followers:0, growth:0, photo:null, popularity:0, genres:[]};
       }
-    }));
-    if(i+5<ARTISTS.length) await new Promise(r=>setTimeout(r,250));
+    });
+
+    setStatus('');
+    showRefreshing(false);
+    renderDashboard();
+  } catch(e) {
+    setStatus('Error loading artists: ' + e.message);
+    showRefreshing(false);
   }
-  setStatus('');
-  showRefreshing(false);
-  renderDashboard();
 }
 
+// LA SIDEBAR
 async function loadLAShows() {
-  const container=document.getElementById('la-shows');
-  const countEl=document.getElementById('la-count');
-  let all=[];
-  for(const artist of ARTISTS){
-    try{
-      const enc=encodeURIComponent(artist.name);
-      const res=await fetch(`https://rest.bandsintown.com/artists/${enc}/events?app_id=${BANDSINTOWN_APP_ID}&date=upcoming`);
-      const events=await res.json();
-      if(Array.isArray(events)){
-        const la=events.filter(isLA).map(e=>({...e,artistName:artist.name,artistId:artist.id}));
-        all=all.concat(la);
+  const container = document.getElementById('la-shows');
+  const countEl = document.getElementById('la-count');
+  let all = [];
+
+  for(const artist of ARTISTS) {
+    try {
+      const enc = encodeURIComponent(artist.name);
+      const res = await fetch(`https://rest.bandsintown.com/artists/${enc}/events?app_id=${BANDSINTOWN_APP_ID}&date=upcoming`);
+      if(res.ok) {
+        const events = await res.json();
+        if(Array.isArray(events)) {
+          const la = events.filter(isLA).map(e => ({...e, artistName: artist.name, artistId: artist.id}));
+          all = all.concat(la);
+        }
       }
-    }catch(e){}
-    await new Promise(r=>setTimeout(r,80));
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 100));
   }
-  all.sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
-  countEl.textContent=all.length||'0';
-  if(all.length===0){
-    container.innerHTML=`<div class="shows-empty">No upcoming LA shows found for your tracked artists right now.<br><br>Check back soon!</div>`;
+
+  all.sort((a,b) => new Date(a.datetime) - new Date(b.datetime));
+  countEl.textContent = all.length || '0';
+
+  if(all.length === 0) {
+    container.innerHTML = `<div class="shows-empty">No upcoming LA shows right now.<br><br>Check back soon!</div>`;
     return;
   }
-  container.innerHTML=all.map(e=>`
+
+  container.innerHTML = all.map(e => `
     <div class="show-card" onclick="openArtist('${e.artistId}')">
       <div class="show-card-date">${fmtDate(e.datetime)}</div>
       <div class="show-card-artist">${e.artistName}</div>
       <div class="show-card-venue">${e.venue?.name||'—'}</div>
-      ${e.url?`<a href="${e.url}" target="_blank" onclick="event.stopPropagation()" class="show-card-tickets">Tickets ↗</a>`:''}
+      ${e.url ? `<a href="${e.url}" target="_blank" onclick="event.stopPropagation()" class="show-card-tickets">Tickets ↗</a>` : ''}
     </div>
   `).join('');
 }
 
+// ARTIST PAGE SHOWS
 async function loadArtistShows(name) {
-  const container=document.getElementById('artist-shows');
+  const container = document.getElementById('artist-shows');
   if(!container) return;
-  try{
-    const enc=encodeURIComponent(name);
-    const res=await fetch(`https://rest.bandsintown.com/artists/${enc}/events?app_id=${BANDSINTOWN_APP_ID}&date=upcoming`);
-    const events=await res.json();
-    if(!Array.isArray(events)||events.length===0){
-      container.innerHTML=`<div class="no-shows-box">No upcoming shows found for ${name}.</div>`;
+  try {
+    const enc = encodeURIComponent(name);
+    const res = await fetch(`https://rest.bandsintown.com/artists/${enc}/events?app_id=${BANDSINTOWN_APP_ID}&date=upcoming`);
+    const events = await res.json();
+    if(!Array.isArray(events) || events.length === 0) {
+      container.innerHTML = `<div class="no-shows-box">No upcoming shows found for ${name}.</div>`;
       return;
     }
-    container.innerHTML=`
+    container.innerHTML = `
       <div class="shows-list-full">
-        ${events.slice(0,10).map(e=>`
+        ${events.slice(0,10).map(e => `
           <div class="show-item">
             <div class="show-date-full">${new Date(e.datetime).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
             <div class="show-info">
               <div class="show-venue-full">${e.venue?.name||'—'}</div>
               <div class="show-loc">${[e.venue?.city,e.venue?.region,e.venue?.country].filter(Boolean).join(', ')}</div>
             </div>
-            ${e.url?`<a href="${e.url}" target="_blank" class="show-tix">Tickets ↗</a>`:''}
+            ${e.url ? `<a href="${e.url}" target="_blank" class="show-tix">Tickets ↗</a>` : ''}
           </div>
         `).join('')}
       </div>`;
-  }catch(err){
-    container.innerHTML=`<div class="no-shows-box">Could not load shows for ${name}.</div>`;
+  } catch(e) {
+    container.innerHTML = `<div class="no-shows-box">Could not load shows for ${name}.</div>`;
   }
 }
 
-function setStatus(msg){
-  const b=document.getElementById('status-bar');
+function setStatus(msg) {
+  const b = document.getElementById('status-bar');
   if(!b) return;
-  b.textContent=msg;
-  b.className=msg?'status-bar visible':'status-bar';
+  b.textContent = msg;
+  b.className = msg ? 'status-bar visible' : 'status-bar';
 }
 
-function showRefreshing(on){
-  const btn=document.getElementById('refresh-btn');
+function showRefreshing(on) {
+  const btn = document.getElementById('refresh-btn');
   if(!btn) return;
-  btn.textContent=on?'Loading...':'Refresh';
-  btn.disabled=on;
-  btn.className=on?'refresh-btn loading':'refresh-btn';
+  btn.textContent = on ? 'Loading...' : 'Refresh';
+  btn.disabled = on;
+  btn.className = on ? 'refresh-btn loading' : 'refresh-btn';
 }
 
-function renderDashboard(){
-  const sorted=Object.values(artistData).sort((a,b)=>(b.growth||0)-(a.growth||0));
-  const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-  document.getElementById('root').innerHTML=`
+function renderDashboard() {
+  const sorted = Object.values(artistData).sort((a,b) => (b.growth||0) - (a.growth||0));
+  const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('root').innerHTML = `
     <nav class="nav">
       <div class="nav-logo">GROWTH BOARD</div>
       <div class="nav-right">
@@ -388,16 +407,16 @@ function renderDashboard(){
       <div class="col-label">Growth</div>
       <div></div>
     </div>
-    ${sorted.length===0?`
+    ${sorted.length === 0 ? `
       <div style="padding:3rem 2rem;font-family:var(--mono);font-size:12px;color:var(--text3)">
-        Loading all 40 artists from Spotify — takes about 30 seconds on first run...
+        Loading artists from Spotify...
       </div>
-    `:sorted.map((a,i)=>`
+    ` : sorted.map((a,i) => `
       <div class="rank-row ${i===0?'top':''}" onclick="openArtist('${a.id}')">
         <div class="rank-num">${String(i+1).padStart(2,'0')}</div>
         <div>${a.photo
-          ?`<img class="rank-photo" src="${a.photo}" alt="${a.name}" onerror="this.style.display='none'">`
-          :`<div class="rank-photo-placeholder">${a.name.slice(0,2).toUpperCase()}</div>`
+          ? `<img class="rank-photo" src="${a.photo}" alt="${a.name}" onerror="this.style.display='none'">`
+          : `<div class="rank-photo-placeholder">${a.name.slice(0,2).toUpperCase()}</div>`
         }</div>
         <div class="rank-info">
           <div class="rank-name">${a.name}${i===0?'<span class="top-badge">Top Mover</span>':''}</div>
@@ -412,26 +431,26 @@ function renderDashboard(){
   `;
 }
 
-function renderArtist(id){
-  const a=artistData[id];
+function renderArtist(id) {
+  const a = artistData[id];
   if(!a) return;
-  document.getElementById('root').innerHTML=`
+  document.getElementById('root').innerHTML = `
     <nav class="nav">
       <div class="nav-logo">ARTISTPULSE</div>
       <button class="nav-back" onclick="goBack()">← Back</button>
     </nav>
     <div class="artist-page">
       <div class="banner-wrap">
-        ${a.photo?`<img class="banner-img" src="${a.photo}" alt="${a.name}">`:''}
+        ${a.photo ? `<img class="banner-img" src="${a.photo}" alt="${a.name}">` : ''}
         <div class="banner-overlay"></div>
         <div class="banner-artist-info">
-          ${a.photo?`<img class="banner-photo" src="${a.photo}" alt="${a.name}">`:''}
+          ${a.photo ? `<img class="banner-photo" src="${a.photo}" alt="${a.name}">` : ''}
           <div>
             <div class="banner-name">${a.name}</div>
             <div class="banner-genre">${a.genre}</div>
             <div class="artist-tags">
               ${(a.genres||[]).slice(0,3).map(g=>`<span class="tag">${g}</span>`).join('')}
-              ${a.spotifyUrl?`<a href="${a.spotifyUrl}" target="_blank" class="tag">Spotify ↗</a>`:''}
+              ${a.spotifyUrl ? `<a href="${a.spotifyUrl}" target="_blank" class="tag">Spotify ↗</a>` : ''}
             </div>
           </div>
         </div>
@@ -480,15 +499,15 @@ function renderArtist(id){
     </div>
   `;
   setTimeout(()=>{
-    const b=document.getElementById('gbar');
-    if(b) b.style.width=Math.min(Math.abs(a.growth||0)*3,100)+'%';
+    const b = document.getElementById('gbar');
+    if(b) b.style.width = Math.min(Math.abs(a.growth||0)*3,100)+'%';
   },120);
   loadArtistShows(a.name);
   window.scrollTo(0,0);
 }
 
-function openArtist(id){currentArtistId=id;renderArtist(id);}
-function goBack(){currentArtistId=null;renderDashboard();}
+function openArtist(id) { currentArtistId = id; renderArtist(id); }
+function goBack() { currentArtistId = null; renderDashboard(); }
 
 renderDashboard();
 loadAllArtists();
