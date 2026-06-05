@@ -509,9 +509,11 @@ function renderArtist(id) {
 function openArtist(id) { currentArtistId = id; renderArtist(id); }
 function goBack() { currentArtistId = null; renderDashboard(); }
 
-renderDashboard();
-loadAllArtists();
+// Show all artists instantly from embedded baseline data
+initWithBaseline();
+// Load LA shows sidebar
 loadLAShows();
+// Note: Click "Refresh" to attempt live Spotify data update
 </script>
 </body>
 </html>
